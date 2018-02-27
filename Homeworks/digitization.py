@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-N = 50  # 1000
+N = 100  # 1000
 quantBits = 8  # 16 #32
 quantLevels = 2 ** quantBits / 2
 quantStep = 1. / quantLevels
@@ -23,23 +23,6 @@ def digital(signal):
     # print(np.size(y))
     return y
 
-
-def snrTemp(x, y):
-    dx, de, e, snr = [], [], [], []
-
-    for i in range(N):
-        e.append(x[i] - y[i])
-
-    for i in range(N - 1):
-        dx.append([i + 1] - x[i])
-        de.append(e[i + 1] - e[i])
-        # настоящее значение
-        temp = np.float64(10 * np.log10(np.abs((dx[i] / de[i]) ** 2)))
-        snr.append(temp)
-
-    return snr
-
-
 def snrPr(x, y):
     e, snr = [], []
     for i in range(N):
@@ -47,7 +30,7 @@ def snrPr(x, y):
 
     dx = np.var(x)
     de = np.var(e)
-    snr = 10 * np.log10(np.abs((dx / de) ** 2))
+    snr = 10 * np.log10(np.abs(dx / de))
     return snr, np.var(y)
 
 
