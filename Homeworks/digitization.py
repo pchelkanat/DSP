@@ -31,7 +31,7 @@ def snrPr(x, y):
     dx = np.var(x)
     de = np.var(e)
     snr = 10 * np.log10(np.abs(dx / de))
-    return snr, np.var(y)
+    return snr
 
 
 def snrTh(quantBits):
