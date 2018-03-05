@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.signal import hann
 
 '''
 ##
@@ -36,7 +37,7 @@ plt.show()
 from scipy.signal import hann
 
 N=1000
-S = hann(N)
+S = hann(10)
 #w=np.fft.fft(S)
 
 plt.figure()
@@ -47,5 +48,4 @@ plt.plot(S)
 #plt.subplot(2,1,2)
 #plt.plot(w)
 plt.show()
-
 '''

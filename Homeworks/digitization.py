@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-N = 100  # 1000
+N = 100  # 500 #1000
 quantBits = 8  # 16 #32
 quantLevels = 2 ** quantBits / 2
 quantStep = 1. / quantLevels
@@ -22,6 +22,7 @@ def digital(signal):
     # y   = np.round (x / quantStep) * quantStep;
     # print(np.size(y))
     return y
+
 
 def snrPr(x, y):
     e, snr = [], []
