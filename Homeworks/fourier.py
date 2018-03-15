@@ -10,12 +10,15 @@ fs,x = sw.read("voice.wav")
 
 #
 x = x / (np.max(np.abs(x)))
-speech=x[24800:60000]
-silence=x[60000:109600]
+speech=x[26000:26320]
+silence=x[70000:70320]
+print("Size of speech & silence: ",np.size(speech),np.size(silence))
 #sw.write("speech.wav", fr, speech)
 #sw.write("silence.wav", fr, silence)
 
-#160=10ns. разделение на окна по 10 нс
+
+"""
+#160=10ns. разделение вольшого куска на окна по 10 нс
 def frames(wave):
     n=int(np.size(wave)/160)
     y=np.zeros((n,160),dtype=np.float64)
@@ -31,7 +34,7 @@ def hanning(wave):
     v,h=np.shape(w)
     win=hann(160)
     result = np.array([])
-    #по кол-ву окон v=310-silence /220-speech, а h-ширина окна = 160
+    #по кол-ву окон v, а h-ширина окна = 160
     for i in range(v):
         for j in range(h):
             w[i][j]*=win[j]
@@ -41,13 +44,21 @@ def hanning(wave):
         np.append(result, w[i]) #НИЧЕГО НЕ ДЕЛАЕТ
     print(result,np.shape(result))
     return result
-
+"""
 """
 a = np.array([])
 b = np.array([[2,3,4],[1,0,2]])
 print(np.append(a,b[1])) 
 print(np.hstack((a,b[1],b[0])))
 """
+
+
+def hanning2(wave):
+    w=hann(np.size(wave))
+    for i in range(np.size(wave)):
+        wave[i]*=w[i]
+    return wave
+
 
 #отображение половины ряда Фурье
 def half_fourier(wave):
@@ -57,31 +68,29 @@ def half_fourier(wave):
 
 def F0(wave, fs):
     max=0
+    #отсечь 0-й
     x=half_fourier(wave)[1:]
     for i in range(np.size(x)):
         if x[i]>max:
             max=x[i]
             s=i
         else: continue
-    return s*fs/np.size(x)
+    return s*fs/(np.size(x)+1)
 
 
-fcv=half_fourier(speech)
-fcs=half_fourier(silence)
-print(F0(speech,fs))
-
-#fcv=half_fourier(hanning(speech))
-#fcs=half_fourier(hanning(silence))
-
-#fcs=hanning(speech)
+fcv=half_fourier(hanning2(speech))
+fcs=half_fourier(hanning2(silence))
+print("F0: ",F0(speech,fs))
 
 plt.figure()
 plt.subplot(2,2,1)
 plt.title("Speech")
+#plt.plot(hanning2(speech))
 plt.plot(speech)
 
 plt.subplot(2,2,2)
 plt.title("Silence")
+#plt.plot(hanning2(silence))
 plt.plot(silence)
 
 plt.subplot(2,2,3)
