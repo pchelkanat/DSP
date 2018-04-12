@@ -39,7 +39,7 @@ def ADBS(N):
 
     S = np.ones((N + 1, N), dtype=np.int32)
     S[0] = np.random.randint(0, 2, (1, N), dtype=np.int32)  # ненулевой вектор-строка, 1xN
-    # в дальнейшем чтобы получить столбец будем транспонировать
+    # в дальнейшем чтобы получить столбец будем транспонировать, хотя не обязательно
     if (S[0].sum() == 0):
         S[0, 0] = 1
     # print("S[0]", S[0], np.shape(S))
@@ -106,7 +106,7 @@ def LPM2(origin, Len, y, x):
         yS = np.array2string(S1[k]).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
         yS=int(yS,2)
         print(yS)
-        #ТАКОГО ПРОСТО НЕ СУЩЕСТВУЕТ
+        #ТАКОГО ПРОСТО НЕ СУЩЕСТВУЕТ yS=4160807999990694828971048076007390406762468559
         originbytes[yS] = int(originbytes[yS])
         orBitLen = len(originbytes[yS])
         print(originbytes[yS][orBitLen - 1],type(originbytes[yS][orBitLen - 1]))
