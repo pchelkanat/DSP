@@ -28,7 +28,7 @@ q[0, 0] = 1
 A = np.vstack((A, q))
 # print(A)
 
-D = np.zeros((10, 1), dtype=np.int64)  # вектор-столбец Nx1
+D = np.zeros((10,1), dtype=np.int64)  # вектор-столбец Nx1
 D[0][0] = 1
 B = D.T  # вектор-строка 1xN
 print(D, np.shape(D))
@@ -41,8 +41,7 @@ if (S[0].sum() == 0):
     S[0, 0] = 1
 print()
 
-y = np.zeros((1, 10), dtype=np.int64)
-x = np.zeros((1, 10), dtype=np.int64)
+y = np.zeros(10,dtype=np.int64)
 for k in range(10):
     # print(np.shape(A), np.shape(S[k]), np.shape(B))
     # print("ss", S[k],np.shape(S[k]))
@@ -58,12 +57,11 @@ for k in range(10):
     print(temp1, np.shape(temp1))
     S[k + 1] = temp1  # сохраняем опять в строку, но для y[k] он столбец
     y[k] = np.dot(D.T, temp1.T)  # 1xN * Nx1 = число
-    print('y', y[k])
-    #x[k] = (y[k] + np.linalg.multi_dot([D.T, A, S])) % 2
+    print('y',y[k])
 
 print()
 print("s", S)
-print("YY", y)
+print("YY",y)
 
 sbytes_d = int(sbits, 2).to_bytes(len(sbytes), 'big')  # начало с MSB
 msg = sbytes_d.decode('utf-8')
