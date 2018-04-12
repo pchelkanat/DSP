@@ -26,21 +26,22 @@ def Origin2Orbit(origin):
     return originbytes
 
 
-def ADBS():
-    A = np.eye(10 - 1, 10, k=1, dtype=np.int64)  # опр. матрица
-    q = (-1 * np.random.randint(0, 2, (1, 10), dtype=np.int64)) % 2  # многочлен
+def ADBS(N):
+    A = np.eye(N - 1, N, k=1, dtype=np.int64)  # опр. матрица
+    q = (-1 * np.random.randint(0, 2, (1, N), dtype=np.int64)) % 2  # многочлен
     q[0, 0] = 1
     A = np.vstack((A, q))
     # print(A)
 
-    D = np.zeros(10, dtype=np.int64)  # вектор-столбец Nx1
+    D = np.zeros(N, dtype=np.int64)  # вектор-столбец Nx1
     D[0] = 1
-    B = D.T  # вектор-строка 1xN
-    print(D, np.shape(D))
-    print(B, np.shape(B))
 
-    S = np.ones((11, 10), dtype=np.int64)
-    S[0] = np.random.randint(0, 2, (1, 10), dtype=np.int64)  # ненулевой вектор-строка, 1xN
+    B = D.T  # вектор-строка 1xN
+    #print(D, np.shape(D))
+    #print(B, np.shape(B))
+
+    S = np.ones((N+1, N), dtype=np.int64)
+    S[0] = np.random.randint(0, 2, (1, N), dtype=np.int64)  # ненулевой вектор-строка, 1xN
     # в дальнейшем чтобы получить столбец будем транспонировать
     if (S[0].sum() == 0):
         S[0, 0] = 1
@@ -48,8 +49,9 @@ def ADBS():
 
 
 def convertWtr(A, D, B, S, sbits):
-    y = np.zeros(10, dtype=np.int64)
-    for k in range(10):
+    N=len(sbits)
+    y = np.zeros(N, dtype=np.int64)
+    for k in range(N):
         # print(np.shape(A), np.shape(S[k]), np.shape(B))
         # print("ss", S[k],np.shape(S[k]))
         # print(k, sbits[k])
@@ -69,20 +71,23 @@ def convertWtr(A, D, B, S, sbits):
 
 
 def restoreWtr(A, D, S, y):
-    x = np.zeros(10, dtype=np.int64)
-    for k in range(10):
+    N=len(y)
+    x = np.zeros(N, dtype=np.int64)
+    for k in range(N):
         x[k] = (y[k] + np.linalg.multi_dot([D, A, S[k]])) % 2
     return x
 
 
 def __init__():
-    A, D, B, S = ADBS()
+
     sbits, N = s2bit(s)
+    A, D, B, S = ADBS(N)
 
     y = convertWtr(A, D, B, S, sbits)
     x = restoreWtr(A, D, S, y)
     print("y",y)
     print("x",x)
+    print(sbits)
 
 __init__()
 
