@@ -2,7 +2,8 @@ import bitstring as bs
 import numpy as np
 import scipy.io.wavfile as sw
 
-#Преобразование wtr в бинарный вид
+
+# Преобразование wtr в бинарный вид
 def s2bit(s):
     # print(len(s))
     sbytes = s.encode("utf-8")
@@ -10,17 +11,19 @@ def s2bit(s):
     N = len(sbits)
     return sbits, N
 
-#Преобразование амплитуд в бинарный вид
+
+# Преобразование амплитуд в бинарный вид
 def origin2orbit(origin, Len):
     originbytes = np.zeros_like(origin, dtype=list)
 
     for i in range(Len[0]):
         originbytes[i] = (format(origin[i], 'b').replace("-", "").zfill(8))
     # print(originbytes[1],originbytes[1][len(originbytes[0])-1])
-    #print("orbyte",originbytes)
+    # print("orbyte",originbytes, type(originbytes), type(originbytes[0]))
     return originbytes
 
-#Компоненты
+
+# Компоненты
 def ADBS(q):
     A = np.eye(11 - 1, 11, k=1, dtype=np.int32)  # опр. матрица
     A = np.vstack((A, q))
@@ -41,7 +44,8 @@ def ADBS(q):
     # print("S[0]",S[0], np.shape(S))
     return A, D, B, S
 
-#Преобразование wtr
+
+# Преобразование wtr в Y
 def convertWtr(A, D, B, S, sbits):
     N = len(sbits)
     # print(N)
@@ -64,28 +68,29 @@ def convertWtr(A, D, B, S, sbits):
     return y, S
 
 
-#Находим позицию младший бит которой нужно заменить
+# Находим позицию, младший бит которой нужно заменить
 def findPosition(A, S, sbits):
     N = len(sbits)
-    pos=list()
+    pos = list()
     for k in range(N):
         temp2 = (np.dot(A, S[k])) % 2
         S = np.vstack(((S, temp2)))
 
-    for k in range(1,N+1,1):
-        st=""
-        #print(S[k])
+    for k in range(1, N + 1, 1):
+        st = ""
+        # print(S[k])
         for i in range(len(S[k])):
-            st=st+str(S[k,i])
-            #print("st",st,type(st))
-        st=int(st,2)
-        #print(st, type(st))
+            st = st + str(S[k, i])
+            # print("st",st,type(st))
+        st = int(st, 2)
+        # print(st, type(st))
         pos.append(st)
-    print(pos)
-    print(len(pos))
+    # print(pos)
+    # print(len(pos))
     return pos
 
-#Восстановление бинарной последовательности Х wtr
+
+# Восстановление бинарной последовательности Х wtr
 def restoreWtr(A, D, S, y):
     N = len(y)
     x = np.zeros(N, dtype=np.int32)
@@ -100,9 +105,9 @@ def LPM1(s, q):
     # print(sbits, len(sbits))
     A, D, B, S = ADBS(q)
     y, S = convertWtr(A, D, B, S, sbits)
-    x = restoreWtr(A, D, S, y)
+    # x = restoreWtr(A, D, S, y)
 
-    #преобразование в последовательность
+    # преобразование массива в последовательность
     yS = np.array2string(y).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
     # print("A", A)
     # print("D", D)
@@ -112,28 +117,32 @@ def LPM1(s, q):
     # print("y", yS)
     # print("x", x)
     # print(sbits)
-    return yS, x
+    return yS, sbits
 
 
 def LPM2(origin, Len, y, x, q):
     A1, D1, B1, S1 = ADBS(q)
     pos = findPosition(A1, S1, x)
 
-    originbytes = origin2orbit(origin, Len)
+    newbytes = origin2orbit(origin, Len)
     for k in range(len(pos)):
-        temp=originbytes[pos[k]]
-        print(temp)
+        temp = newbytes[pos[k]]
+        temp = temp[:len(temp) - 1] + y[k]
+        newbytes[pos[k]] = temp
 
-        temp[len(temp)]=y[k]
-        print("t",temp, temp[len(temp)], type(temp))
-
-    return originbytes
+    new = np.zeros_like(newbytes, dtype=np.int32)
+    for i in range(Len[0]):
+        if origin[i] < 0:
+            new[i] = -1 * int(newbytes[i], 2)
+        else:
+            new[i] = int(newbytes[i], 2)
+    # print(new, type(new), type(new[0]))
+    return new
 
 
 def __init__():
     fs, origin = sw.read("voice.wav")
     origin = np.int32(origin)
-    shapes = np.shape(origin)
 
     s = "pchelkanat's watermark"
 
@@ -141,17 +150,24 @@ def __init__():
     q1 = np.array([[1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1]])
     q2 = np.array([[1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1]])
 
-    ym, xm = LPM1(s, q1)
+    ym, sbits = LPM1(s, q1)
+    print(ym)
+    print(sbits)
+    print()
 
-    LPM2(origin, shapes, ym, xm, q2)
+    newwave = LPM2(origin, np.shape(origin), ym, sbits, q2)
+    print(newwave)
 
 
-#    orBytes=getAddress(origin, y1)
-#    return orBytes
+
+    """
+    plt.figure()
+
+    plt.plot(origin, label="Origin")
+    plt.plot(newwave, label="With wtr")
+
+    plt.show()
+"""
+
 
 __init__()
-
-"""
-sbytes_d = int(sbits, 2).to_bytes(len(sbytes), 'big')  # начало с MSB
-msg = sbytes_d.decode('utf-8')
-"""
