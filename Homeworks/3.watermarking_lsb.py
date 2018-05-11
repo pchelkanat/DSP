@@ -1,4 +1,5 @@
 import bitstring as bs
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io.wavfile as sw
 
@@ -137,7 +138,11 @@ def LPM2(origin, Len, y, x, q):
         else:
             new[i] = int(newbytes[i], 2)
     # print(new, type(new), type(new[0]))
-    return new
+
+    for i in range(Len[0]):
+        newbytes[i] = int(newbytes[i])
+
+    return new, newbytes
 
 
 def __init__():
@@ -145,6 +150,11 @@ def __init__():
     origin = np.int32(origin)
 
     s = "pchelkanat's watermark"
+    # print(len(list(s)), len(s))
+    wtrmark = []
+    for i in range(len(s)):
+        wtrmark.append(ord(list(s)[i]))
+    print("wtrmark", wtrmark)
 
     # q1,q2 - последние 2 на стр 261; степень M=11
     q1 = np.array([[1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1]])
@@ -152,31 +162,28 @@ def __init__():
 
     ym, sbits = LPM1(s, q1)
     # print(ym)
-    # print(sbits)
+    # print("wtrmark in bits", sbits)
     # print()
 
-    newwave = LPM2(origin, np.shape(origin), ym, sbits, q2)
-    # print(newwave)
+    newwave, newwavebyte = LPM2(origin, np.shape(origin), ym, sbits, q2)
+    print("newwavebyte", newwavebyte)
+    corr = np.correlate(newwavebyte, list(wtrmark), "valid")
+    # print(len(corr), corr)
 
-    v = np.correlate(origin, newwave, mode="full")
-    print(v)
-
-
-    ###DECODE
-
-
-    """
     plt.figure()
 
-    plt.subplot(2,1,1)
+    plt.subplot(3, 1, 1)
     plt.plot(origin, label="Origin")
-    plt.plot(newwave, label="With wtr")
+    plt.legend()
 
-    plt.subplot(2, 1, 2)
-    plt.plot(v)
+    plt.subplot(3, 1, 2)
+    plt.plot(newwave, label="With wtrmark")
+    plt.legend()
 
+    plt.subplot(3, 1, 3)
+    plt.plot(corr, label="Correlation")
+    plt.legend()
     plt.show()
-    """
 
 
 __init__()
