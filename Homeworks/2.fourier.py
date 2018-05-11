@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import hann
 import scipy.io.wavfile as sw
 
-fs,x = sw.read("voice.wav")
+fs,x = sw.read("Speech/voice.wav")
 #print(fs)
 #print(x)
 #print(np.size(x))
@@ -75,7 +75,7 @@ def F0(wave, fs):
             max=x[i]
             s=i
         else: continue
-    return s*fs/(np.size(x)+1)
+    return s*fs/(np.size(x)+1)/2 #s, fs, np.size(x)+1
 
 
 fcv=half_fourier(hanning2(speech))
