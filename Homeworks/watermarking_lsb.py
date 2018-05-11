@@ -127,7 +127,7 @@ def LPM2(origin, Len, y, x, q):
     newbytes = origin2orbit(origin, Len)
     for k in range(len(pos)):
         temp = newbytes[pos[k]]
-        temp = temp[:len(temp) - 1] + y[k]
+        temp = temp[- 1] + y[k]
         newbytes[pos[k]] = temp
 
     new = np.zeros_like(newbytes, dtype=np.int32)
@@ -151,23 +151,32 @@ def __init__():
     q2 = np.array([[1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1]])
 
     ym, sbits = LPM1(s, q1)
-    print(ym)
-    print(sbits)
-    print()
+    # print(ym)
+    # print(sbits)
+    # print()
 
     newwave = LPM2(origin, np.shape(origin), ym, sbits, q2)
-    print(newwave)
+    # print(newwave)
 
+    v = np.correlate(origin, newwave, mode="full")
+    print(v)
+
+
+    ###DECODE
 
 
     """
     plt.figure()
 
+    plt.subplot(2,1,1)
     plt.plot(origin, label="Origin")
     plt.plot(newwave, label="With wtr")
 
+    plt.subplot(2, 1, 2)
+    plt.plot(v)
+
     plt.show()
-"""
+    """
 
 
 __init__()

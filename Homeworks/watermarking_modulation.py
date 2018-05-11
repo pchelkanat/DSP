@@ -30,7 +30,7 @@ def restoreWtr(A, D, S, y):
 # Преобразование в массив по 160
 def originM(origin, Size, win):
     or_mass = np.zeros((Size, win), dtype=np.int32)
-    for k in range(Size):  # from 0 to Len(sbits) by 160, the last is 176*160
+    for k in range(Size):  # from 0 to  by 160, the last is 176*160
         or_mass[k] = origin[k * 160:(k + 1) * 160]
     # print(or_mass)
     # print(np.shape(or_mass), type(or_mass[0, 0]))
@@ -43,20 +43,18 @@ def findY(sqror1, sqror2, Len, win):
     orM2 = originM(sqror2, Len, win)
     sum1 = np.sum(orM1, axis=1)
     sum2 = np.sum(orM2, axis=1)
-    print(sum1, len(sum1), type(sum1))
-    print(sum2, len(sum2), type(sum2[0]))
+    #print(sum1, len(sum1), np.size(sum1), type(sum1))
+    #print(sum2, len(sum2), type(sum2[0]))
 
     y=[]
-    k=0
     for i in range(len(sum1)):
         if sum2[i]>sum1[i]:
-            y[k]=1
-            k=+1
+            y.append(1)
         elif sum2[i]<sum1[i]:
-            y[k]=0
-            k=+1
+            y.append(0)
         else:
             continue
+    print(y)
     return y
 
 
@@ -72,7 +70,7 @@ def B_spline(win):
             spline.append(-9 * t[i] ** 2 + 9 * t[i] - 3 / 2)
         elif 2 / 3 < t[i] <= 1:
             spline.append(9 / 2 * (1 - t[i]) ** 2)
-    print(spline)
+    #print(spline)
     return spline
 
 
@@ -101,6 +99,7 @@ def __init__():
     fs2, origin2 = sw.read("voice.wav")
     win = int(fs1 / 100)
     Size = int(np.shape(origin1)[0] / win)
+    print(Size)
 
     sqr_origin1 = np.int32(origin1 ** 2)  # sqr for the power
     sqr_origin2 = np.int32(origin2 ** 2)
