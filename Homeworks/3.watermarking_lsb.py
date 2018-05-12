@@ -106,7 +106,7 @@ def LPM1(s, q):
     # print(sbits, len(sbits))
     A, D, B, S = ADBS(q)
     y, S = convertWtr(A, D, B, S, sbits)
-    # x = restoreWtr(A, D, S, y)
+    #x = restoreWtr(A, D, S, y)
 
     # преобразование массива в последовательность
     yS = np.array2string(y).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
@@ -151,10 +151,6 @@ def __init__():
 
     s = "pchelkanat's watermark"
     # print(len(list(s)), len(s))
-    wtrmark = []
-    for i in range(len(s)):
-        wtrmark.append(ord(list(s)[i]))
-    print("wtrmark", wtrmark)
 
     # q1,q2 - последние 2 на стр 261; степень M=11
     q1 = np.array([[1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1]])
@@ -162,12 +158,18 @@ def __init__():
 
     ym, sbits = LPM1(s, q1)
     # print(ym)
-    # print("wtrmark in bits", sbits)
+    #print(sbits)
     # print()
 
     newwave, newwavebyte = LPM2(origin, np.shape(origin), ym, sbits, q2)
     print("newwavebyte", newwavebyte)
-    corr = np.correlate(newwavebyte, list(wtrmark), "valid")
+
+    sbits=list(sbits)
+    for i in range(len(sbits)):
+        sbits[i]=int(sbits[i])
+    print ("wtrmark in bits", sbits)# 176 elements
+
+    corr = np.correlate(newwavebyte, sbits, "valid")
     # print(len(corr), corr)
 
     plt.figure()
