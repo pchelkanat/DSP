@@ -1,15 +1,17 @@
-import bitstring as bs
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io.wavfile as sw
 
 
-# Преобразование wtr в бинарный вид
-def s2bit(s):
-    # print(len(s))
-    sbytes = s.encode("utf-8")
-    sbits = bs.BitArray(sbytes).bin
-    N = len(sbits)
-    return sbits, N
+# Амплитуды -> бинарный вид
+def origin2orbit(origin, Len):
+    originbytes = np.zeros_like(origin, dtype=list)
+
+    for i in range(Len[0]):
+        originbytes[i] = (format(origin[i], 'b').replace("-", "").zfill(8))
+    # print(originbytes[1],originbytes[1][len(originbytes[0])-1])
+    # print("orbyte",originbytes, type(originbytes), type(originbytes[0]))
+    return originbytes  # type = list of strings
 
 
 # Опр. матрица А с полиномом q
@@ -19,14 +21,17 @@ def findA(q):
     return A
 
 
-# Возврат в первоначальное представление битпоследовательности wtr
-def restoreWtr(A, D, S, y):
-    N = len(y)
-    x = np.zeros(N, dtype=np.int32)
-    for k in range(N):
-        x[k] = (y[k] + np.linalg.multi_dot([D, A, S[k]])) % 2
-    xS = np.array2string(x).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
-    return xS  # x
+#Вообще не используем, но написали. По готовым компонентам, а не их генерации.
+def LPM_convert(A, D, S, sbits):
+    N = len(sbits)
+    B = D.T
+    y = np.zeros(N, dtype=np.int32)
+
+    for k in range(1, N):
+        temp1 = (np.dot(A, S[k]) + (B * int(sbits[k]))) % 2  # S[k]
+        S = np.vstack((S, temp1))  # добавляем
+        y[k] = np.dot(D, temp1) % 2
+    return y
 
 
 # B-Spline
@@ -77,65 +82,103 @@ def originM(origin, win_num, win):
     return or_mass
 
 
+# Сокрытие шифрованного wtrmark
+def LPM_hideY(origin, win_num, win, y):
+    coefA = cA(origin)
+    # coefA=0.3
+    spline = B_spline(win)
+    result = np.array([0])
+    orM = originM(origin, win_num, win)
+    for i in range(len(y)):
+        if y[i] == 1:
+            result = np.hstack((result, orM[i] * u_plus(spline, coefA)))
+        else:
+            result = np.hstack((result, orM[i] * u_minus(spline, coefA)))
+    return result
+
+
 # Нахождение изменения в последовательности по мощности
 def findY(norigin, origin, win_num, win):
-    coefA = cA(origin)
-    spline = B_spline(win)
-    sqr_nor=np.int32(norigin**2)
-    sqr_or= np.int32(origin**2)
+    sqr_nor = np.int32(norigin ** 2)
+    sqr_or = np.int32(origin ** 2)
+
     norM = originM(sqr_nor, win_num, win)
-    norM2 = np.ones_like(norM)
     orM = originM(sqr_or, win_num, win)
 
     # находим сумму квадратов отсчетов в одном окне
     sum_nor = np.sum(norM, axis=1)
     sum_or = np.sum(orM, axis=1)
-    #print(sum_nor, type(sum_nor[0]), np.size(sum_nor), type(sum_nor))
-    #print(sum_or, len(sum_or), type(sum_or[0]))
+    # print(sum_nor, type(sum_nor[0]), np.size(sum_nor), type(sum_nor))
+    # print(sum_or, len(sum_or), type(sum_or[0]))
 
     y = []
     yi = []
     for i in range(len(sum_nor)):
         if sum_or[i] > sum_nor[i]:
             y.append(1)
-            yi.append(i*160)
-            #norM2 = norM * u_plus(spline, coefA)
+            yi.append(i * 160)
+            # print("n",norM[i])
+            # print(orM[i])
+
         elif sum_or[i] < sum_nor[i]:
             y.append(0)
-            yi.append(i*160)
-            #norM2 = norM * u_minus(spline, coefA)
+            yi.append(i * 160)
         else:
             continue
     # print(y)
     return y, yi
 
 
+# Возврат в первоначальное представление битпоследовательности wtr
+# функция отличная от lab3
+def restoreWtr(A, D, S, y):
+    N = len(y)
+    B = D.T
+    x = np.zeros(N, dtype=np.int32)
+
+    x[0] = (y[0] + np.linalg.multi_dot([D, A, S])) % 2
+    for k in range(1, N):
+        temp1 = (np.dot(A, S[k]) + (B * int(x[k]))) % 2  # S[k]
+        S = np.vstack((S, temp1))  # добавляем
+        x[k] = (y[k] + np.linalg.multi_dot([D, A, S[k]])) % 2
+    return x
+
+
 def __init__():
     # 1+x^9+x^11
-    q1 = np.array([[1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]])
+    q1 = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]])
     A = findA(q1)
-    D = np.array([[1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]])
+    D = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]])
     S = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    # sbits=какая-то последовательность длины win=160
 
     fs1, norigin = sw.read("watermark.wav")
     fs2, origin = sw.read("voice.wav")
 
     win = int(fs1 / 100)
     win_num = int(np.shape(norigin)[0] / win)
-    print(win_num)
+    # print(win_num) #7319
 
     y, yi = findY(norigin, origin, win_num, win)
     print("y", y)
-    print("yi",yi)
-    # xS = restoreWtr(A, D, S, y)
+    print("y pos", yi)
 
-    # print(xS, len(xS))
+    x = restoreWtr(A, D, S, y)
+    print("wtrmark", x)
 
+    norbyte = origin2orbit(norigin, np.shape(norigin))
+    for i in range(np.shape(norigin)[0]):
+        norbyte[i] = int(norbyte[i])
+
+    corr = np.correlate(norbyte, x, "valid")
     # x = B_spline(win)
 
-    # plt.figure()
-    # plt.plot(x, 'k')
-    # plt.show()
+    plt.figure()
+    # plt.plot(origin, 'g')
+    # plt.plot(norigin, "r")
+    plt.plot(corr)
+    plt.show()
 
 
 __init__()
