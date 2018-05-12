@@ -47,7 +47,8 @@ def ADBS(q):
 
 
 # Преобразование wtr в Y
-def convertWtr(A, D, B, S, sbits):
+def convertWtr(A, D, S, sbits):
+    B=D.T
     N = len(sbits)
     # print(N)
     y = np.zeros(N, dtype=np.int32)
@@ -105,8 +106,8 @@ def LPM1(s, q):
     sbits, N = s2bit(s)
     # print(sbits, len(sbits))
     A, D, B, S = ADBS(q)
-    y, S = convertWtr(A, D, B, S, sbits)
-    #x = restoreWtr(A, D, S, y)
+    y, S = convertWtr(A, D, S, sbits)
+    # x = restoreWtr(A, D, S, y)
 
     # преобразование массива в последовательность
     yS = np.array2string(y).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
@@ -167,7 +168,7 @@ def __init__():
     sbits=list(sbits)
     for i in range(len(sbits)):
         sbits[i]=int(sbits[i])
-    print ("wtrmark in bits", sbits)# 176 elements
+    print ("wtrmark in bits",sbits)
 
     corr = np.correlate(newwavebyte, sbits, "valid")
     # print(len(corr), corr)
