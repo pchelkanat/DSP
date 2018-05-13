@@ -172,7 +172,6 @@ def __init__():
         norbyte[i] = int(norbyte[i])
 
     corr = np.correlate(norbyte, x, "valid")
-    # x = B_spline(win)
 
     plt.figure()
     # plt.plot(origin, 'g')
