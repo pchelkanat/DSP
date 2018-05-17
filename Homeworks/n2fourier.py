@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import hann
 import scipy.io.wavfile as sw
 
-fs,x = sw.read("Speech/voice.wav")
+fs,x = sw.read("voice.wav")
 #print(fs)
 #print(x)
 #print(np.size(x))
@@ -13,8 +13,8 @@ x = x / (np.max(np.abs(x)))
 speech=x[26000:26320]
 silence=x[70000:70320]
 print("Size of speech & silence: ",np.size(speech),np.size(silence))
-#sw.write("speech.wav", fr, speech)
-#sw.write("silence.wav", fr, silence)
+#sw.write("speech.wav", fr, np.int16(speech))
+#sw.write("silence.wav", fr, np.int16(silence))
 
 
 """
