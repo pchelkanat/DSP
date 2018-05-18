@@ -21,24 +21,6 @@ def createSignal(Fs, myfreqs):
 
 
 # PART 2
-def s2bit(s):
-    # print(len(s))
-    sbytes = s.encode("utf-8")
-    sbits = bs.BitArray(sbytes).bin
-    N = len(sbits)
-    return sbits, N
-
-
-# Амплитуды -> бинарный вид
-def origin2orbit(origin, Len):
-    originbytes = np.zeros_like(origin, dtype=list)
-
-    for i in range(Len[0]):
-        originbytes[i] = (format(origin[i], 'b').replace("-", "").zfill(8))
-    # print(originbytes[1],originbytes[1][len(originbytes[0])-1])
-    # print("orbyte",originbytes, type(originbytes), type(originbytes[0]))
-    return originbytes  # type = list of strings
-
 
 # Спектр фрагмента, куда будет внедряться wtrmark
 def Spectrum(origin, N, Pos):
@@ -107,12 +89,13 @@ def Part1():
 
 def Part2():
     fs, origin = sw.read("voice.wav")
+    coef=np.max(origin)
     N = 2047  # длина фильтра, должна быть нечетной, иначе не работает
-    Pos = 10000  # позиция внеднения
+    Pos = 123456  # позиция внеднения
     n = 100  # вспомогательная величина
 
     F_frag = Spectrum(origin, N, Pos)
-    freq_fir = freq_cutoff(fs, N, 500)
+    freq_fir = freq_cutoff(fs, N, 800)
 
     # Создание фильтра
     myfilter = sgn.firwin(N, freq_fir, pass_zero=False)
@@ -120,9 +103,9 @@ def Part2():
 
     # Внедрение
     # print((np.linalg.norm(myfilter))**2) #если малое, то coef должен быть большим
-    wtrmark, norigin = Watermarking(myfilter, Pos, origin, 5000)
+    wtrmark, norigin = Watermarking(myfilter, Pos, origin, coef)
     corr = np.correlate(norigin, wtrmark, "valid")
-    sw.write("fir_filter.wav", fs, np.int16(norigin))
+    #sw.write("fir_filter.wav", fs, np.int16(norigin))
 
     # Фильтрация для обнаружения wtrmark
     sig_ff = sgn.filtfilt(myfilter, 1, norigin)
