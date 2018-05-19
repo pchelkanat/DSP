@@ -1,6 +1,5 @@
 import random
 
-import bitstring as bs
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io.wavfile as sw
@@ -42,6 +41,7 @@ def freq_cutoff(fs, N, pos):
         freq_fir = random.random()
     # print("c", c)
     print("cutoff freq", freq_fir)
+    print("pos", pos)
     return freq_fir
 
 
@@ -89,13 +89,13 @@ def Part1():
 
 def Part2():
     fs, origin = sw.read("voice.wav")
-    coef=np.max(origin)
-    N = 2047  # длина фильтра, должна быть нечетной, иначе не работает
+    coef = np.max(origin)
+    N = 127  # длина фильтра, должна быть нечетной, иначе не работает
     Pos = 123456  # позиция внеднения
     n = 100  # вспомогательная величина
 
     F_frag = Spectrum(origin, N, Pos)
-    freq_fir = freq_cutoff(fs, N, 800)
+    freq_fir = freq_cutoff(fs, N, len(F_frag) // 4)  # позиция все равно варьируется, чем больше N, тем ближе к середине
 
     # Создание фильтра
     myfilter = sgn.firwin(N, freq_fir, pass_zero=False)
@@ -105,7 +105,7 @@ def Part2():
     # print((np.linalg.norm(myfilter))**2) #если малое, то coef должен быть большим
     wtrmark, norigin = Watermarking(myfilter, Pos, origin, coef)
     corr = np.correlate(norigin, wtrmark, "valid")
-    #sw.write("fir_filter.wav", fs, np.int16(norigin))
+    # sw.write("fir_filter.wav", fs, np.int16(norigin))
 
     # Фильтрация для обнаружения wtrmark
     sig_ff = sgn.filtfilt(myfilter, 1, norigin)
@@ -124,17 +124,17 @@ def Part2():
     plt.plot(w / np.pi, abs(h), label="Передат. функция")
     plt.legend()
     plt.subplot(3, 1, 3)
-    plt.plot(corr[Pos - n:Pos + N + n], label="Корреляция")
+    plt.plot(corr[Pos - n:Pos + N + n], label="Корреляция\nПозиция: " + str(MyPos))
     plt.legend()
 
     plt.figure()
     plt.subplot(2, 1, 1)
-    plt.plot(origin[Pos - n:Pos + N + n], label="Оригинал")
     plt.plot(norigin[Pos - n:Pos + N + n], label="Внедренный wtrmark")
+    plt.plot(origin[Pos - n:Pos + N + n], label="Оригинал")
     plt.legend()
     plt.title("PART #2.2")
     plt.subplot(2, 1, 2)
-    plt.plot(sig_ff[Pos - n:Pos + N + n], label="Фильтрованный\nПозиция: " + str(MyPos))
+    plt.plot(sig_ff[Pos - n:Pos + N + n], label="Фильтрованный")
     plt.legend()
 
     plt.show()

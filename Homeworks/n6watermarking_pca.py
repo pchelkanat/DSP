@@ -1,7 +1,8 @@
-import numpy as np
-import scipy.signal as sgn
-import scipy.io.wavfile as sw
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.io.wavfile as sw
+import scipy.signal as sgn
+
 
 def alphaMatr(origin, shape, N):
     alphaM = np.zeros((1, N), dtype=np.float64)
@@ -34,10 +35,11 @@ def betha(Matr):
     print("betha", betha)
     return betha
 
-def Watermarking(origin, Pos, N, betha,coef):
-    norigin=origin
+
+def Watermarking(origin, Pos, N, wtrmark, coef):
+    norigin = origin
     for i in range(N):
-        norigin[i+Pos]+=betha[i]*coef
+        norigin[i + Pos] += wtrmark[i] * coef
 
     return norigin
 
@@ -45,10 +47,10 @@ def Watermarking(origin, Pos, N, betha,coef):
 def __init__():
     fs, origin = sw.read("voice.wav")
     origin = np.int64(origin)
-    coef=np.max(origin)
-    Pos = 12345
-    N = 2047
-    n=100
+    coef = np.max(origin)
+    Pos = 123456
+    N = 127
+    n = 100
 
     origin2 = origin[Pos:Pos + 2 * N]
     shape = np.shape(origin2)[0]
@@ -56,12 +58,12 @@ def __init__():
 
     alphaM = alphaMatr(origin2, shape, N)
     Matr = MatrA(alphaM, shape, N)
-    bth=betha(Matr)
+    bth = betha(Matr)
 
     w, h = sgn.freqz(bth)
-    w1,h1 = sgn.freqz(bth[::-1])
-    norigin=Watermarking(origin,Pos,N,bth,coef)
-    corr=np.correlate(norigin,bth, "valid")
+    w1, h1 = sgn.freqz(bth[::-1])
+    norigin = Watermarking(origin, Pos, N, bth, coef)
+    corr = np.correlate(norigin, bth, "valid")
     MyPos = np.argmax(corr)
     print("My Position", MyPos)
 
@@ -74,6 +76,11 @@ def __init__():
     plt.legend()
     plt.subplot(3, 1, 3)
     plt.plot(corr[Pos - n:Pos + N + n], label="Корреляция\nПозиция: " + str(MyPos))
+    plt.legend()
+
+    plt.figure()
+    plt.plot(norigin[Pos - n:Pos + N + n], label="Внедренный wtrmark")
+    plt.plot(origin[Pos - n:Pos + N + n], label="Оригинал")
     plt.legend()
     plt.show()
 
