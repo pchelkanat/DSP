@@ -9,7 +9,7 @@ def alphaMatr(origin, shape, N):
     print("Find alphaM ...")
     for i in range(shape - N + 1):
         alphaM = np.vstack((alphaM, origin[i:i + N]))
-        # print(i)
+        # print(i) #
     alphaM = alphaM[1:]
     # print("alphaM",alphaM)
     return alphaM
@@ -32,13 +32,13 @@ def betha(Matr):
     # print("vals", vals)
     # print("vecs", vecs)
     betha = vecs[:, -1]
-    print("betha", betha)
+    # print("betha", betha)
     return betha
 
 
-def Watermarking(origin, Pos, N, wtrmark, coef):
+def Watermarking(origin, Pos, wtrmark, coef):
     norigin = origin
-    for i in range(N):
+    for i in range(len(wtrmark)):
         norigin[i + Pos] += wtrmark[i] * coef
 
     return norigin
@@ -46,23 +46,26 @@ def Watermarking(origin, Pos, N, wtrmark, coef):
 
 def __init__():
     fs, origin = sw.read("voice.wav")
-    origin = np.int64(origin)
+    origin = np.float64(origin)
     coef = np.max(origin)
     Pos = 123456
     N = 127
     n = 100
 
-    origin2 = origin[Pos:Pos + 2 * N]
-    shape = np.shape(origin2)[0]
+    origin2 = origin[Pos:Pos + 2 * N]  # создаем урезанную версию оригинала, чтобы не ждать слиииииишком долго: 6000 итераций за 5 минут!:(
+    # обнаружение ЦВЗ не страдает.
+
+    shape = np.shape(origin2)[0]  # origin2
     # print(shape)
 
-    alphaM = alphaMatr(origin2, shape, N)
+    alphaM = alphaMatr(origin2, shape, N)  # origin2
     Matr = MatrA(alphaM, shape, N)
     bth = betha(Matr)
 
     w, h = sgn.freqz(bth)
     w1, h1 = sgn.freqz(bth[::-1])
-    norigin = Watermarking(origin, Pos, N, bth, coef)
+
+    norigin = Watermarking(origin, Pos, bth, coef)
     corr = np.correlate(norigin, bth, "valid")
     MyPos = np.argmax(corr)
     print("My Position", MyPos)
