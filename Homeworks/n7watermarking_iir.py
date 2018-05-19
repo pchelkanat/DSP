@@ -38,19 +38,33 @@ def betha(Matr):
 
 def Watermarking(filter, Pos, wtrmark, coef):
     print("Watermarking ...")
-    norigin = np.float64(filter)
+    norigin = filter
     for i in range(len(wtrmark)):
-        norigin[i + Pos] += wtrmark[i]
+        norigin[i + Pos] += wtrmark[i] * coef
 
     return norigin
 
 
+def FreqResponse(a, b, b_new):
+    w, h = sgn.freqz(b, a)  # учтойчив
+    w1, h1 = sgn.freqz(a, b_new)  # устойчивость пропала
+
+    plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.plot(w / np.pi, abs(h), label="Передат. функция")
+    plt.legend()
+    plt.subplot(2, 1, 2)
+    plt.plot(w1 / np.pi, abs(h1), label="Передат. функция new")
+    plt.legend()
+
+
 def __init__():
     fs, origin = sw.read("voice.wav")
-    # origin = np.int32(origin)
+    # origin = np.float64(origin)
     coef = np.max(origin)
-    Pos = 12345
-    N = 55
+    Pos = 123456
+    order = 15  # для устойчивости значения поменьше, но >=11
+    N = 255
     n = 100
 
     origin2 = origin[Pos:Pos + 2 * N]
@@ -60,50 +74,63 @@ def __init__():
     Matr = MatrA(alphaM, shape, N)
     bth = betha(Matr)
 
-    b, a = sgn.iirfilter(N,0.7,btype='highpass')
-    #b, a = sgn.butter(N, 0.7, "highpass")
+    b, a = sgn.iirfilter(order, 0.3, btype="low")
+    #b, a = sgn.butter(order, 0.3, btype="low")
     # print("b", b)
     # print("a", a)
-    c = np.random.random(N)
+    c = np.random.random(order)
 
     pc = np.poly1d(c, True)
     b_new = pc.coeffs.real
 
-    y = sgn.filtfilt(b_new, a, origin)
-    # print(np.shape(y), y)
+    FreqResponse(a, b, b_new)
+
+    y = sgn.lfilter(b_new, a, origin)  # фильтрация
+    # print(np.shape(y), type(y[1]))
     norigin = Watermarking(y, Pos, bth, coef)
+    # print(np.shape(norigin),type(norigin[1]))
     corr1 = np.correlate(norigin, bth, "valid")
+    MyPos1 = np.argmax(corr1)  # обнаружил
+    print(MyPos1)
 
-    v = sgn.filtfilt(a, b_new, norigin)
+    v = sgn.lfilter(a, b_new, norigin)  # сокрытие обратным
+    # print(np.shape(v), type(v[1]))
     corr2 = np.correlate(v, bth, "valid")
+    MyPos2 = np.argmax(corr2)  # обнаружил
+    print(MyPos2)
 
-    u = sgn.filtfilt(b_new, a, v)
+    u = sgn.lfilter(b_new, a, v)  # для обнаружения
+    # print(np.shape(u), type(u[1]))
     corr3 = np.correlate(u, bth, "valid")
-    MyPos = np.argmax(corr3)
-
-    w, h = sgn.freqz(b, a)
-    w1, h1 = sgn.freqz(a, b_new)
+    MyPos3 = np.argmax(corr3)  # обнаружил
+    print(MyPos3)
 
     plt.figure()
-    plt.subplot(2, 1, 1)
-    plt.plot(w / np.pi, abs(h), label="Передат. функция")
+    plt.subplot(4, 1, 1)
+    plt.plot(origin[Pos-n:Pos + N + n], label="Оригинал")
     plt.legend()
-    plt.subplot(2, 1, 2)
-    plt.plot(w1 / np.pi-1, abs(h1), label="Передат. функция new")
+    plt.subplot(4, 1, 2)
+    #plt.plot(y[Pos-n:Pos + N + n], label="Фильтр y")
+    #plt.legend()
+    #plt.subplot(5, 1, 3)
+    plt.plot(norigin[Pos-n:Pos + N + n], label="Фильтр + wtrmark")
+    plt.legend()
+    plt.subplot(4, 1, 3)
+    plt.plot(v[Pos-n:Pos + N + n], label="Обратный фильтр v")
+    plt.legend()
+    plt.subplot(4, 1, 4)
+    plt.plot(u[Pos-n:Pos + N + n], label="Для определения wtrmark u")
     plt.legend()
 
     plt.figure()
     plt.subplot(3, 1, 1)
-    plt.plot(origin[Pos - n:Pos + N + n], label="Оригинал")
-    plt.plot(norigin[Pos - n:Pos + N + n], label="Фильрованный c wtrmark")
+    plt.plot(corr1[Pos - n:Pos + N + n], label="Коррелляция norigin")
     plt.legend()
     plt.subplot(3, 1, 2)
-    plt.plot(v[Pos - n:Pos + N + n], label="Фильтрованный скрытый wtrmark")
+    plt.plot(corr2[Pos - n:Pos + N + n], label="Коррелляция обр. фильтра v")
     plt.legend()
     plt.subplot(3, 1, 3)
-    plt.plot(corr1, label="Коррелляция")
-    plt.plot(corr2, label="Коррелляция фильтрованного")
-    plt.plot(corr3, label="Коррелляция\nПозиция" + str(MyPos))
+    plt.plot(corr3[Pos - n:Pos + N + n], label="Коррелляция u\nПозиция " + str(MyPos3))
     plt.legend()
     plt.show()
 
