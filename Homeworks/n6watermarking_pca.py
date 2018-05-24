@@ -4,24 +4,14 @@ import scipy.io.wavfile as sw
 import scipy.signal as sgn
 
 
-def alphaMatr(origin, shape, N):
-    alphaM = np.zeros((1, N), dtype=np.float64)
-    print("Find alphaM ...")
-    for i in range(shape - N + 1):
-        alphaM = np.vstack((alphaM, origin[i:i + N]))
-        # print(i) #
-    alphaM = alphaM[1:]
-    # print("alphaM",alphaM)
-    return alphaM
-
-
-def MatrA(alphaM, shape, N):
+# Нахождение матрицы A по векторам альфа
+def MatrA(origin, shape, N):
     Matr = np.zeros((N, N))
     print("Find Matr ...")
     for i in range(shape - N + 1):
-        temp = np.array([alphaM[i]])  # чтобы можно было умножать .T
+        alphaM = np.array(origin[i:i + N])
         # print(i)
-        Matr += np.dot(temp.T, temp)
+        Matr += np.dot(alphaM.T, alphaM)
     # print("Matr", Matr)
     return Matr
 
@@ -46,20 +36,16 @@ def Watermarking(origin, Pos, wtrmark, coef):
 
 def __init__():
     fs, origin = sw.read("voice.wav")
+    coef = 5  # np.max(origin)
     origin = np.float64(origin)
-    coef = np.max(origin)
+    origin = origin / (2 ** 15)  # нормировка необходима во избежание переполнения памяти
+
     Pos = 123456
-    N = 127
-    n = 100
+    N = 127  # 255 за 3 минуты, 127 за 2 минуты
 
-    origin2 = origin[Pos:Pos + 2 * N]  # создаем урезанную версию оригинала, чтобы не ждать слиииииишком долго: 6000 итераций за 5 минут!:(
-    # обнаружение ЦВЗ не страдает.
-
-    shape = np.shape(origin2)[0]  # origin2
+    shape = np.shape(origin)[0]
     # print(shape)
-
-    alphaM = alphaMatr(origin2, shape, N)  # origin2
-    Matr = MatrA(alphaM, shape, N)
+    Matr = MatrA(origin, shape, N)
     bth = betha(Matr)
 
     w, h = sgn.freqz(bth)
@@ -72,18 +58,13 @@ def __init__():
 
     plt.figure()
     plt.subplot(3, 1, 1)
-    plt.plot(w / np.pi, abs(h), label="Передат. функция")
+    plt.plot(w / np.pi, abs(h), label="Передат. функция betha")
     plt.legend()
     plt.subplot(3, 1, 2)
-    plt.plot(w1 / np.pi, abs(h1), label="Передат. функция reverse")
+    plt.plot(w1 / np.pi, abs(h1), label="Передат. функция reverse betha")
     plt.legend()
     plt.subplot(3, 1, 3)
-    plt.plot(corr[Pos - n:Pos + N + n], label="Корреляция\nПозиция: " + str(MyPos))
-    plt.legend()
-
-    plt.figure()
-    plt.plot(norigin[Pos - n:Pos + N + n], label="Внедренный wtrmark")
-    plt.plot(origin[Pos - n:Pos + N + n], label="Оригинал")
+    plt.plot(corr, label="Корреляция\nПозиция: " + str(MyPos))
     plt.legend()
     plt.show()
 
